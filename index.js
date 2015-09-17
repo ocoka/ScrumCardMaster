@@ -27,7 +27,7 @@ app.use(session({
 }));
 
 app.use(koaws(app, {
-    heartbeat: true,
+    heartbeat: false,
     heartbeatInterval: 5000
 }));
 app.use(bodyParser());

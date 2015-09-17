@@ -80,7 +80,13 @@ KoaWebSocketServer.prototype.onConnection = function (socket) {
 
         try {
             debug('→ (%s) %s: %o', payload.id, payload.method, payload.params);
-            socket.send(JSON.stringify(payload));
+            if (socket.readyState==1){
+                socket.send(JSON.stringify(payload));
+            }else{
+                if (cb) {
+                    cb.call(this, {errorMessage:"Socket not ready to send data"});
+                }
+            }
         } catch (e) {
             console.error('Something went wrong: ', e.stack);
             if (cb) {
@@ -173,7 +179,12 @@ KoaWebSocketServer.prototype.onConnection = function (socket) {
     socket.method('options', this.options);
     // Send initial thump
     if (this.options.heartbeat) {
-        socket.send('--thump--');
+        try {
+            socket.send('--thump--');
+        }
+        catch (e) {
+            console.error('Something went wrong: ', e.stack);
+        }
     }
 }
 
