@@ -7,7 +7,7 @@ var session = require('koa-generic-session');
 var bodyParser = require('koa-bodyparser');
 var crypto = require('crypto');
 
-var registeredUsers={};
+var registeredUsers=[];
 
 function generate_key() {
     var sha = crypto.createHash('sha256');
@@ -31,18 +31,8 @@ app.use(koaws(app, {
     heartbeatInterval: 5000
 }));
 app.use(bodyParser());
-app.ws.register('round', function* () {
-    if (param.name!=null && param.pass!=null){
-        if (!registeredUsers[param.name]){
-            var sessid=generate_key();
-            registeredUsers[name]=sessid;
-            this.result({session:sessid});
-        }else{
-            this.error(352,"User already registered");
-        }
-    }else{
-        this.error(351,"Access denied");
-    }
+app.ws.register('stat', function* () {
+    this.result({"players":registeredUsers});
 });
 app.use(function* LoginController (next){
     if (this.path=='/login'){
@@ -65,6 +55,7 @@ app.use(function* LoginController (next){
                 }else{
                     this.session.playerName=playerName;
                     this.session.role=role;
+                    registeredUsers.push({player:playerName,role:role});
                     this.response.body={result:'success'};
                 }
 

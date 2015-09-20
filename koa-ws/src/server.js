@@ -161,19 +161,24 @@ KoaWebSocketServer.prototype.onConnection = function (socket) {
                 socket.session = yield _this.app.sessionStore.get('koa:sess:' + sessionId);
                 if (socket.session==null){
                     socket.close();
+                }else{
+                    _this.sessions[sessionId]=socket.session;
+                    socket.method('session', socket.session);
                 }
-                socket.method('session', socket.session);
             })());
         }else{
             socket.close();
+            return false;
         }
 
-        if (typeof this.sockets[sessionId] === 'undefined') {
-            this.sockets[sessionId] = [];
-        }
-        this.sockets[sessionId].push(socket);
+            if (typeof this.sockets[sessionId] === 'undefined') {
+                this.sockets[sessionId] = [];
+            }
+            this.sockets[sessionId].push(socket);
+
     }else{
         socket.close();
+        return false;
     }
     // Send options
     socket.method('options', this.options);
