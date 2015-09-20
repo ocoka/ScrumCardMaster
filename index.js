@@ -53,9 +53,9 @@ app.use(function* LoginController (next){
                 if (role==null){
                     this.response.body={result:'error',errors:'Wrong password'};
                 }else{
-                    this.session.playerName=playerName;
+                    this.session.name=playerName;
                     this.session.role=role;
-                    registeredUsers.push({player:playerName,role:role});
+                    registeredUsers.push({name:playerName,role:role});
                     this.response.body={result:'success'};
                 }
 
