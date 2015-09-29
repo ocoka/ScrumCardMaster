@@ -224,7 +224,7 @@ KoaWebSocketServer.prototype.broadcast = function (method, params) {
     if(this.server && this.server.clients) {
         for (var i in this.server.clients) {
             this.server.clients[i].method(method, params, function (err) {
-                debug('Could not send message', data, err);
+                debug('Could not send message', method, err);
             });
         }
     }

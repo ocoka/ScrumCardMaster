@@ -7,8 +7,7 @@ var session = require('koa-generic-session');
 var bodyParser = require('koa-bodyparser');
 var crypto = require('crypto');
 
-var registeredUsers=[];
-
+var registeredPlayers={};
 function generate_key() {
     var sha = crypto.createHash('sha256');
     sha.update(Math.random().toString());
@@ -31,9 +30,23 @@ app.use(koaws(app, {
     heartbeatInterval: 5000
 }));
 app.use(bodyParser());
-app.ws.register('stat', function* () {
-    this.result({"players":registeredUsers});
+app.ws.register('stat', function* () {//TODO:socket.on close - remove from registered player
+    if (registeredPlayers[this.socket.session.name]==null){
+        registeredPlayers[this.socket.session.name]=this.socket.session.role;
+        this.socket.on('close',function(){
+            console.log("Player "+this.session.name+" disconnected");
+            delete registeredPlayers[this.session.name];
+        });
+        for (var ses in app.ws.sockets){
+            if (ses!=this.session.id){
+                var sockets=app.ws.sockets[ses];
+                sockets[0].method('stat',registeredPlayers);
+            }
+        }
+    }
+        this.result(registeredPlayers);
 });
+
 app.use(function* LoginController (next){
     if (this.path=='/login'){
         if (this.request.body.playerName==null ||
@@ -47,6 +60,8 @@ app.use(function* LoginController (next){
                 this.response.body={result:'error',errors:'Player name too long'};
             }else if(!(/^[а-яa-z][а-яa-z\-_ ]*$/i.test(playerName))){
                 this.response.body={result:'error',errors:'Player name contains invalid characters'};
+            }else if(registeredPlayers[playerName]!=null){
+                this.response.body={result:'error',errors:'Player already registered'};
             }else{
 
                 var role={'111':"player",'222':"master"}[this.request.body.password];
@@ -55,7 +70,6 @@ app.use(function* LoginController (next){
                 }else{
                     this.session.name=playerName;
                     this.session.role=role;
-                    registeredUsers.push({name:playerName,role:role});
                     this.response.body={result:'success'};
                 }
 
@@ -67,8 +81,8 @@ app.use(function* LoginController (next){
     }
 });
 app.use(function* RoundController (next){
-    console.log("RoundController request "+this.path);
+
         yield(next);
-    console.log("RoundController response"+this.path);
+
 });
 app.listen(3000);
