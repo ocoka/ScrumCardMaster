@@ -30,7 +30,7 @@ app.use(koaws(app, {
     heartbeatInterval: 5000
 }));
 app.use(bodyParser());
-app.ws.register('stat', function* () {//TODO:socket.on close - remove from registered player
+app.ws.register('stat', function* () {
     if (registeredPlayers[this.socket.session.name]==null){
         registeredPlayers[this.socket.session.name]=this.socket.session.role;
         this.socket.on('close',function(){
