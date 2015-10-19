@@ -30,19 +30,25 @@ app.use(koaws(app, {
     heartbeatInterval: 5000
 }));
 app.use(bodyParser());
-app.ws.register('stat', function* () {
-    if (registeredPlayers[this.socket.session.name]==null){
-        registeredPlayers[this.socket.session.name]=this.socket.session.role;
-        this.socket.on('close',function(){
-            console.log("Player "+this.session.name+" disconnected");
-            delete registeredPlayers[this.session.name];
-        });
-        for (var ses in app.ws.sockets){
-            if (ses!=this.session.id){
-                var sockets=app.ws.sockets[ses];
+function notifyPlayersChanges(excludedPlayer){
+    for (var ses in app.ws.sockets){
+        if (ses!=excludedPlayer){
+            var sockets=app.ws.sockets[ses];
+            if (sockets.length>0){
                 sockets[0].method('stat',registeredPlayers);
             }
         }
+    }
+}
+app.ws.register('stat', function* () {
+    if (registeredPlayers[this.socket.session.name]==null){
+        registeredPlayers[this.socket.session.name]=this.socket.session.role;
+        this.socket.on('close',()=>{
+            console.log("Player "+this.session.name+" disconnected");
+            delete registeredPlayers[this.session.name];
+            notifyPlayersChanges(this.session.id);
+        });
+        notifyPlayersChanges(this.session.id);
     }
         this.result(registeredPlayers);
 });
