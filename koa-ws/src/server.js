@@ -1,6 +1,6 @@
 var co = require('co');
 var WebSocketServer = require('ws').Server;
-var cookieHelper = require('koa-ws-cookie-helper');
+var cookieHelper = require('./cookieHelper.js');
 
 // Protocol
 var protocol = require('./jsonrpc');
@@ -41,7 +41,7 @@ KoaWebSocketServer.prototype.listen = function (server) {
 
     // Listen to connection
     this.server.on('connection', this.onConnection.bind(this));
-}
+};
 
 /**
  * On new connection
@@ -152,17 +152,17 @@ KoaWebSocketServer.prototype.onConnection = function (socket) {
     var sessionId = cookieHelper.get(socket, 'koa.sid', this.app.keys);
     if (sessionId) {
 
-        if (this.sessions[sessionId]!=null){
-            socket.session = this.sessions[sessionId];
+        if (sessions[sessionId]!=null){
+            socket.session = sessions[sessionId];
             socket.method('session', socket.session);
         }else if (this.app.sessionStore) {
-            var _this = this;
+
             (co.wrap(function* () {
                 socket.session = yield _this.app.sessionStore.get('koa:sess:' + sessionId);
                 if (socket.session==null){
                     socket.close();
                 }else{
-                    _this.sessions[sessionId]=socket.session;
+                    sessions[sessionId]=socket.session;
                     socket.method('session', socket.session);
                 }
             })());
@@ -171,10 +171,10 @@ KoaWebSocketServer.prototype.onConnection = function (socket) {
             return false;
         }
 
-            if (typeof this.sockets[sessionId] === 'undefined') {
-                this.sockets[sessionId] = [];
+            if (typeof sockets[sessionId] === 'undefined') {
+                sockets[sessionId] = [];
             }
-            this.sockets[sessionId].push(socket);
+            sockets[sessionId].push(socket);
 
     }else{
         socket.close();
@@ -191,7 +191,7 @@ KoaWebSocketServer.prototype.onConnection = function (socket) {
             console.error('Something went wrong: ', e.stack);
         }
     }
-}
+};
 
 /**
  * Register a method for server-side
@@ -221,13 +221,14 @@ KoaWebSocketServer.prototype.register = function (method, generator, expose) {
  * @param params object
  */
 KoaWebSocketServer.prototype.broadcast = function (method, params) {
+  function brdClb(err) {
+      debug('Could not send message', method, err);
+  }
     if(this.server && this.server.clients) {
         for (var i in this.server.clients) {
-            this.server.clients[i].method(method, params, function (err) {
-                debug('Could not send message', method, err);
-            });
+            this.server.clients[i].method(method, params, brdClb);
         }
     }
-}
+};
 
 module.exports = KoaWebSocketServer;

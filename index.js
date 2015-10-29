@@ -4,7 +4,7 @@
 var koa = require('koa');
 var koaws = require('./koa-ws');
 var session = require('koa-generic-session');
-var bodyParser = require('koa-bodyparser');
+var koa_body = require('koa-body');
 var crypto = require('crypto');
 
 var registeredPlayers={};
@@ -29,7 +29,7 @@ app.use(koaws(app, {
     heartbeat: false,
     heartbeatInterval: 5000
 }));
-app.use(bodyParser());
+app.use(koa_body());
 function notifyPlayersChanges(excludedPlayer){
     for (var ses in app.ws.sockets){
         if (ses!=excludedPlayer){
@@ -40,7 +40,8 @@ function notifyPlayersChanges(excludedPlayer){
         }
     }
 }
-app.ws.register('stat', function* () {
+/*app.ws.register('stat', function () {
+  if (this.socket.session.name) {
     if (registeredPlayers[this.socket.session.name]==null){
         registeredPlayers[this.socket.session.name]=this.socket.session.role;
         this.socket.on('close',()=>{
@@ -51,36 +52,20 @@ app.ws.register('stat', function* () {
         notifyPlayersChanges(this.session.id);
     }
         this.result(registeredPlayers);
-});
+  }else{
+    console.log("Unnamed player");
+    this.error(403,'You don\'t provide user name');
+  }
+});*/
 
 app.use(function* LoginController (next){
     if (this.path=='/login'){
-        if (this.request.body.playerName==null ||
-            this.request.body.playerName.length<1 ||
-            this.request.body.password==null ||
-            this.request.body.password.length<1){
-            this.response.body={result:'error',errors:'Invalid player name or password'};
+        this.checkBody('playerName').stripLow().trim().notEmpty('Empty player name').len(3,20,"Player name must from 3 up to 20 chars");
+        this.checkBody('password').stripLow().trim().notEmpty('Password must be provided').in(['111','222'],'Incorrect password');
+        if (this.errors){
+          this.body={errors:this.errors,succes:false};
         }else{
-            var playerName=this.request.body.playerName;
-            if (playerName.length>16){
-                this.response.body={result:'error',errors:'Player name too long'};
-            }else if(!(/^[а-яa-z][а-яa-z\-_ ]*$/i.test(playerName))){
-                this.response.body={result:'error',errors:'Player name contains invalid characters'};
-            }else if(registeredPlayers[playerName]!=null){
-                this.response.body={result:'error',errors:'Player already registered'};
-            }else{
-
-                var role={'111':"player",'222':"master"}[this.request.body.password];
-                if (role==null){
-                    this.response.body={result:'error',errors:'Wrong password'};
-                }else{
-                    this.session.name=playerName;
-                    this.session.role=role;
-                    this.response.body={result:'success'};
-                }
-
-            }
-
+          this.body={succes:true};
         }
     }else{
         yield(next);
