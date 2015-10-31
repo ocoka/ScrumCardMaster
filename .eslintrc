@@ -1,0 +1,14 @@
+{
+    "ecmaFeatures": {
+      "arrowFunctions":true,
+      "generators":true
+    },
+    "extends": "eslint:recommended",
+    "env":{
+      "node":true
+    },
+    "rules":{
+      "no-console":0,
+      "no-unused-vars":1
+    }
+}
