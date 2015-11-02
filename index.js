@@ -5,6 +5,7 @@ var koa = require('koa');
 var koaws = require('./koa-ws');
 var session = require('koa-generic-session');
 var koa_body = require('koa-body');
+var koa_validate= require('koa-validate');
 var crypto = require('crypto');
 
 var registeredPlayers={};
@@ -30,6 +31,7 @@ app.use(koaws(app, {
     heartbeatInterval: 5000
 }));
 app.use(koa_body());
+app.use(koa_validate());
 function notifyPlayersChanges(excludedPlayer){
     for (var ses in app.ws.sockets){
         if (ses!=excludedPlayer){
@@ -61,11 +63,11 @@ function notifyPlayersChanges(excludedPlayer){
 app.use(function* LoginController (next){
     if (this.path=='/login'){
         this.checkBody('playerName').stripLow().trim().notEmpty('Empty player name').len(3,20,"Player name must from 3 up to 20 chars");
-        this.checkBody('password').stripLow().trim().notEmpty('Password must be provided').in(['111','222'],'Incorrect password');
+        this.checkBody('playerPass').stripLow().trim().notEmpty('Password must be provided').in(['111','222'],'Incorrect password');
         if (this.errors){
-          this.body={errors:this.errors,succes:false};
+          this.body={errors:this.errors.reduce((p,n)=>Object.assign(p,n),{}),result:'error'};
         }else{
-          this.body={succes:true};
+          this.body={result:'success'};
         }
     }else{
         yield(next);

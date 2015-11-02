@@ -6,6 +6,8 @@
     "koa-body": "*",
     "koa-generic-session": "*",
     "koa-validate": "*",
-    "keygrip":"*"
+    "keygrip":"*",
+    "object-assign":"*",
+    "ws":"*"
   }
 }
