@@ -150,6 +150,7 @@ KoaWebSocketServer.prototype.onConnection = function (socket) {
 
     // Let's try and connect the socket to session
     var sessionId = cookieHelper.get(socket, 'koa.sid', this.app.keys);
+    var _this=this;
     if (sessionId) {
 
         if (sessions[sessionId]!=null){

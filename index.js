@@ -9,6 +9,10 @@ var koa_validate= require('koa-validate');
 var crypto = require('crypto');
 
 var registeredPlayers={};
+var roles={
+  212:"simple",
+  212212:"master"
+}
 function generate_key() {
     var sha = crypto.createHash('sha256');
     sha.update(Math.random().toString());
@@ -42,13 +46,13 @@ function notifyPlayersChanges(excludedPlayer){
         }
     }
 }
-/*app.ws.register('stat', function () {
-  if (this.socket.session.name) {
-    if (registeredPlayers[this.socket.session.name]==null){
-        registeredPlayers[this.socket.session.name]=this.socket.session.role;
+app.ws.register('stat', function () {
+  if (this.socket.session.playerName) {
+    if (registeredPlayers[this.socket.session.playerName]==null){
+        registeredPlayers[this.socket.session.playerName]=this.socket.session.playerRole;
         this.socket.on('close',()=>{
-            console.log("Player "+this.session.name+" disconnected");
-            delete registeredPlayers[this.session.name];
+            console.log("Player "+this.session.playerName+" disconnected");
+            delete registeredPlayers[this.session.playerName];
             notifyPlayersChanges(this.session.id);
         });
         notifyPlayersChanges(this.session.id);
@@ -58,15 +62,16 @@ function notifyPlayersChanges(excludedPlayer){
     console.log("Unnamed player");
     this.error(403,'You don\'t provide user name');
   }
-});*/
+});
 
 app.use(function* LoginController (next){
     if (this.path=='/login'){
         this.checkBody('playerName').stripLow().trim().notEmpty('Empty player name').len(3,20,"Player name must from 3 up to 20 chars");
-        this.checkBody('playerPass').stripLow().trim().notEmpty('Password must be provided').in(['111','222'],'Incorrect password');
+        this.checkBody('playerPass').stripLow().trim().notEmpty('Password must be provided').in(Object.keys(roles),'Incorrect password');
         if (this.errors){
           this.body={errors:this.errors.reduce((p,n)=>Object.assign(p,n),{}),result:'error'};
         }else{
+          this.session={playerName:this.request.body.playerName,playerRole:roles[this.request.body.playerPass]};
           this.body={result:'success'};
         }
     }else{
